@@ -1,0 +1,59 @@
+# Crear el archivo .gitignore
+cat > .gitignore << 'EOF'
+# Entorno virtual
+venv/
+env/
+ENV/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+mysql-data/
+postgres-data/
+data/
+
+# Configuración con credenciales
+.env
+*.env
+config.local.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# Backups
+*.bak
+*.backup
+*.old
+*.orig
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+EOF
