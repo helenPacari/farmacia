@@ -20,6 +20,24 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('medicamentos.listar') }}">Medicamentos</a>
                     </li>
+                    <!-- Dentro de <ul class="navbar-nav me-auto">, después de Medicamentos -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('clientes.listar') }}">Clientes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('ventas.listar') }}">Ventas</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        Inventario
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('medicamentos.listar') }}">Medicamentos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">Categorías</a></li>
+                        <li><a class="dropdown-item" href="#">Laboratorios</a></li>
+                    </ul>
+                </li>
                 </ul>
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}

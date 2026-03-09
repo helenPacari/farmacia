@@ -1,3 +1,8 @@
+# Respaldar el archivo actual
+cp app/templates/medicamentos/listar.html app/templates/medicamentos/listar.html.bak
+
+# Crear el archivo corregido
+cat > app/templates/medicamentos/listar.html << 'EOF'
 {% extends "base.html" %}
 
 {% block title %}Medicamentos - Farmacia App{% endblock %}
@@ -109,8 +114,8 @@
                             <th>Código</th>
                             <th>Nombre</th>
                             <th>Laboratorio</th>
+                            <th>Categoría</th>
                             <th>Stock</th>
-                            <th>Precio Compra</th>
                             <th>Precio Venta</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -129,16 +134,14 @@
                                     <br><small class="text-muted">{{ med.nombre_generico }}</small>
                                 {% endif %}
                             </td>
-                            <td>{{ med.laboratorio or 'N/A' }}</td>
+                            <td>{{ med.laboratorio.nombre if med.laboratorio else 'N/A' }}</td>
+                            <td>{{ med.categoria.nombre if med.categoria else 'N/A' }}</td>
                             <td>
                                 <span class="badge {% if med.stock_bajo %}bg-danger{% else %}bg-success{% endif %}">
                                     {{ med.stock }}
                                 </span>
-                                {% if med.stock_minimo %}
-                                    <br><small>Mín: {{ med.stock_minimo }}</small>
-                                {% endif %}
+                                <br><small>Mín: {{ med.stock_minimo }}</small>
                             </td>
-                            <td>${{ "{:,.0f}".format(med.precio_compra) }}</td>
                             <td>
                                 ${{ "{:,.0f}".format(med.precio_venta) }}
                                 <br><small class="text-success">+{{ med.margen_ganancia|round }}%</small>
@@ -152,7 +155,7 @@
                                 {% if med.requiere_receta %}
                                     <br><span class="badge bg-warning">Receta</span>
                                 {% endif %}
-                                {% if med.fecha_vencimiento and med.fecha_vencimiento < now().date() %}
+                                {% if med.fecha_vencimiento and med.fecha_vencimiento < hoy %}
                                     <br><span class="badge bg-danger">Vencido</span>
                                 {% endif %}
                             </td>
@@ -234,3 +237,4 @@
     </div>
 </div>
 {% endblock %}
+EOF

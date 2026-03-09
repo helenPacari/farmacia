@@ -1,0 +1,150 @@
+cat > app/templates/ventas/detalle.html << 'EOF'
+{% extends "base.html" %}
+
+{% block title %}Detalle de Venta - {{ venta.numero_factura }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-file-invoice"></i> Factura {{ venta.numero_factura }}</h1>
+        <div>
+            <a href="{{ url_for('ventas.listar') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            {% if venta.estado == 'COMPLETADA' %}
+            <form method="POST" action="{{ url_for('ventas.anular', id=venta.id) }}" 
+                  style="display: inline;" 
+                  onsubmit="return confirm('¿Anular esta venta? Se restaurará el stock.');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-ban"></i> Anular Venta
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Detalle de productos -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Productos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detalle in venta.detalles %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ detalle.medicamento.nombre }}</strong>
+                                        <br><small class="text-muted">{{ detalle.medicamento.presentacion }}</small>
+                                    </td>
+                                    <td class="text-center">{{ detalle.cantidad }}</td>
+                                    <td class="text-end">${{ "{:,.0f}".format(detalle.precio_unitario) }}</td>
+                                    <td class="text-end">${{ "{:,.0f}".format(detalle.subtotal) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-dark">
+                                <tr>
+                                    <th colspan="3" class="text-end">Subtotal:</th>
+                                    <th class="text-end">${{ "{:,.0f}".format(venta.subtotal) }}</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3" class="text-end">IVA (12%):</th>
+                                    <th class="text-end">${{ "{:,.0f}".format(venta.iva) }}</th>
+                                </tr>
+                                {% if venta.descuento > 0 %}
+                                <tr>
+                                    <th colspan="3" class="text-end">Descuento:</th>
+                                    <th class="text-end">-${{ "{:,.0f}".format(venta.descuento) }}</th>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <th colspan="3" class="text-end">TOTAL:</th>
+                                    <th class="text-end"><h4 class="text-success">${{ "{:,.0f}".format(venta.total) }}</h4></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Información de la venta -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Información de la Venta</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Factura:</th>
+                            <td>{{ venta.numero_factura }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha:</th>
+                            <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                {% if venta.estado == 'COMPLETADA' %}
+                                    <span class="badge bg-success">Completada</span>
+                                {% elif venta.estado == 'ANULADA' %}
+                                    <span class="badge bg-danger">Anulada</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Forma de Pago:</th>
+                            <td>{{ venta.forma_pago }}</td>
+                        </tr>
+                        <tr>
+                            <th>Vendedor:</th>
+                            <td>{{ venta.usuario.nombre }} {{ venta.usuario.apellidos }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Información del cliente -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ venta.cliente.nombre_completo }}</h6>
+                    <p class="mb-1"><small>Identificación: {{ venta.cliente.identificacion }}</small></p>
+                    <p class="mb-1"><small>Teléfono: {{ venta.cliente.telefono or 'N/A' }}</small></p>
+                    <p class="mb-1"><small>Email: {{ venta.cliente.email or 'N/A' }}</small></p>
+                    <p class="mb-0"><small>Dirección: {{ venta.cliente.direccion or 'N/A' }}</small></p>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            {% if venta.observaciones %}
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">Observaciones</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ venta.observaciones }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+EOF

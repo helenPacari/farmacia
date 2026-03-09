@@ -1,0 +1,113 @@
+cat > app/templates/clientes/editar.html << 'EOF'
+{% extends "base.html" %}
+
+{% block title %}Editar Cliente - Farmacia App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h4 class="mb-0"><i class="fas fa-edit"></i> Editar Cliente: {{ cliente.nombre_completo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('clientes.editar', id=cliente.id) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.tipo_identificacion.label(class="form-label") }}
+                            {{ form.tipo_identificacion(class="form-select" + (" is-invalid" if form.tipo_identificacion.errors else "")) }}
+                            {% for error in form.tipo_identificacion.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.identificacion.label(class="form-label") }}
+                            {{ form.identificacion(class="form-control" + (" is-invalid" if form.identificacion.errors else "")) }}
+                            {% for error in form.identificacion.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.nombre.label(class="form-label") }}
+                            {{ form.nombre(class="form-control" + (" is-invalid" if form.nombre.errors else "")) }}
+                            {% for error in form.nombre.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.apellidos.label(class="form-label") }}
+                            {{ form.apellidos(class="form-control" + (" is-invalid" if form.apellidos.errors else "")) }}
+                            {% for error in form.apellidos.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.telefono.label(class="form-label") }}
+                            {{ form.telefono(class="form-control" + (" is-invalid" if form.telefono.errors else "")) }}
+                            {% for error in form.telefono.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                            {% for error in form.email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.direccion.label(class="form-label") }}
+                        {{ form.direccion(class="form-control" + (" is-invalid" if form.direccion.errors else "")) }}
+                        {% for error in form.direccion.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.fecha_nacimiento.label(class="form-label") }}
+                            {{ form.fecha_nacimiento(class="form-control" + (" is-invalid" if form.fecha_nacimiento.errors else ""), type="date") }}
+                            {% for error in form.fecha_nacimiento.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.observaciones.label(class="form-label") }}
+                        {{ form.observaciones(class="form-control" + (" is-invalid" if form.observaciones.errors else ""), rows=3) }}
+                        {% for error in form.observaciones.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('clientes.detalle', id=cliente.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Actualizar Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+EOF

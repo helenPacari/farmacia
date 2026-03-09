@@ -1,3 +1,8 @@
+# Respaldar el template actual por si acaso
+cp app/templates/medicamentos/crear.html app/templates/medicamentos/crear.html.bak
+
+# Crear el template completamente nuevo
+cat > app/templates/medicamentos/crear.html << 'EOF'
 {% extends "base.html" %}
 
 {% block title %}{{ titulo }} - Farmacia App{% endblock %}
@@ -13,6 +18,7 @@
                 <form method="POST" action="{{ url_for('medicamentos.crear') }}">
                     {{ form.hidden_tag() }}
                     
+                    <!-- Código de barras y Laboratorio -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form.codigo_barras.label(class="form-label") }}
@@ -23,14 +29,15 @@
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            {{ form.laboratorio.label(class="form-label") }}
-                            {{ form.laboratorio(class="form-control" + (" is-invalid" if form.laboratorio.errors else "")) }}
-                            {% for error in form.laboratorio.errors %}
+                            {{ form.laboratorio_id.label(class="form-label") }}
+                            {{ form.laboratorio_id(class="form-select" + (" is-invalid" if form.laboratorio_id.errors else "")) }}
+                            {% for error in form.laboratorio_id.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
                     </div>
                     
+                    <!-- Nombre y Nombre Genérico -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form.nombre.label(class="form-label") }}
@@ -49,6 +56,7 @@
                         </div>
                     </div>
                     
+                    <!-- Presentación y Concentración -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form.presentacion.label(class="form-label") }}
@@ -67,6 +75,26 @@
                         </div>
                     </div>
                     
+                    <!-- Categoría y Ubicación -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.categoria_id.label(class="form-label") }}
+                            {{ form.categoria_id(class="form-select" + (" is-invalid" if form.categoria_id.errors else "")) }}
+                            {% for error in form.categoria_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.ubicacion.label(class="form-label") }}
+                            {{ form.ubicacion(class="form-control" + (" is-invalid" if form.ubicacion.errors else "")) }}
+                            {% for error in form.ubicacion.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Descripción -->
                     <div class="mb-3">
                         {{ form.descripcion.label(class="form-label") }}
                         {{ form.descripcion(class="form-control" + (" is-invalid" if form.descripcion.errors else ""), rows=3) }}
@@ -75,6 +103,7 @@
                         {% endfor %}
                     </div>
                     
+                    <!-- Precios y Stock -->
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             {{ form.precio_compra.label(class="form-label") }}
@@ -99,23 +128,16 @@
                         </div>
                         
                         <div class="col-md-4 mb-3">
-                            {{ form.ubicacion.label(class="form-label") }}
-                            {{ form.ubicacion(class="form-control" + (" is-invalid" if form.ubicacion.errors else "")) }}
-                            {% for error in form.ubicacion.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
                             {{ form.stock.label(class="form-label") }}
                             {{ form.stock(class="form-control" + (" is-invalid" if form.stock.errors else ""), type="number") }}
                             {% for error in form.stock.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
-                        
+                    </div>
+                    
+                    <!-- Stock Mínimo, Máximo y Fecha Vencimiento -->
+                    <div class="row">
                         <div class="col-md-4 mb-3">
                             {{ form.stock_minimo.label(class="form-label") }}
                             {{ form.stock_minimo(class="form-control" + (" is-invalid" if form.stock_minimo.errors else ""), type="number") }}
@@ -131,19 +153,20 @@
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                        
+                        <div class="col-md-4 mb-3">
                             {{ form.fecha_vencimiento.label(class="form-label") }}
                             {{ form.fecha_vencimiento(class="form-control" + (" is-invalid" if form.fecha_vencimiento.errors else ""), type="date") }}
                             {% for error in form.fecha_vencimiento.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
-                        
+                    </div>
+                    
+                    <!-- Requiere Receta -->
+                    <div class="row">
                         <div class="col-md-6 mb-3">
-                            <div class="form-check mt-4">
+                            <div class="form-check">
                                 {{ form.requiere_receta(class="form-check-input") }}
                                 {{ form.requiere_receta.label(class="form-check-label") }}
                             </div>
@@ -152,6 +175,7 @@
                     
                     <hr>
                     
+                    <!-- Botones -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{{ url_for('medicamentos.listar') }}" class="btn btn-secondary me-md-2">
                             <i class="fas fa-times"></i> Cancelar
@@ -166,3 +190,4 @@
     </div>
 </div>
 {% endblock %}
+EOF

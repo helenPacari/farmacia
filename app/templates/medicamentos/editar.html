@@ -13,6 +13,23 @@
                 <form method="POST" action="{{ url_for('medicamentos.editar', id=medicamento.id) }}">
                     {{ form.hidden_tag() }}
                     
+                                        <div class="row">
+    <div class="col-md-6 mb-3">
+        {{ form.codigo_barras.label(class="form-label") }}
+        {{ form.codigo_barras(class="form-control" + (" is-invalid" if form.codigo_barras.errors else "")) }}
+        {% for error in form.codigo_barras.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        {{ form.laboratorio_id.label(class="form-label") }}
+        {{ form.laboratorio_id(class="form-select" + (" is-invalid" if form.laboratorio_id.errors else "")) }}
+        {% for error in form.laboratorio_id.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+        {% endfor %}
+    </div>
+</div>
                     <!-- Mismos campos que en crear.html -->
                     <div class="row">
                         <div class="col-md-6 mb-3">

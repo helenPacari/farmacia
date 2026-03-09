@@ -27,21 +27,12 @@ def create_app():
         from app import models  # noqa
 
     # Registrar Blueprints
-    from app.routes import main, medicamentos, auth
+    from app.routes import main, medicamentos, auth, clientes, ventas
     
     app.register_blueprint(main.bp)
-    app.register_blueprint(medicamentos.bp, url_prefix='/medicamentos')
-    app.register_blueprint(auth.bp, url_prefix='/auth')
-# app/__init__.py - Dentro de create_app(), antes de return app
-
-    # Registrar filtros y funciones globales para plantillas
-    @app.template_global()
-    def now():
-        from datetime import datetime
-        return datetime.now()
-    @app.template_global()
-    def today():
-        from datetime import date
-        return date.today()
+    app.register_blueprint(medicamentos.bp)
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(clientes.bp)
+    app.register_blueprint(ventas.bp)
 
     return app

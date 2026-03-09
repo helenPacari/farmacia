@@ -6,7 +6,8 @@ from app.models import Medicamento
 from app.forms import MedicamentoForm
 from datetime import datetime, date, timedelta
 from sqlalchemy import or_
-bp = Blueprint('medicamentos', __name__)
+# bp = Blueprint('medicamentos', __name__)
+bp = Blueprint('medicamentos', __name__, url_prefix='/medicamentos')
 
 # ============================================
 # LISTAR MEDICAMENTOS (READ - con filtros y paginación)
@@ -100,11 +101,18 @@ def detalle(id):
 # ============================================
 # CREAR MEDICAMENTO (CREATE)
 # ============================================
+# app/routes/medicamentos.py - En la función crear()
+
 @bp.route('/crear', methods=['GET', 'POST'])
 @login_required
 def crear():
     """Crea un nuevo medicamento"""
     form = MedicamentoForm()
+    
+    # Cargar opciones para los selects
+    from app.models import Categoria, Laboratorio
+    form.categoria_id.choices = [(0, 'Seleccione una categoría')] + [(c.id, c.nombre) for c in Categoria.query.filter_by(activo=True).all()]
+    form.laboratorio_id.choices = [(0, 'Seleccione un laboratorio')] + [(l.id, l.nombre) for l in Laboratorio.query.filter_by(activo=True).all()]
     
     if form.validate_on_submit():
         medicamento = Medicamento(
@@ -114,7 +122,8 @@ def crear():
             descripcion=form.descripcion.data,
             presentacion=form.presentacion.data,
             concentracion=form.concentracion.data,
-            laboratorio=form.laboratorio.data,
+            categoria_id=form.categoria_id.data if form.categoria_id.data != 0 else None,
+            laboratorio_id=form.laboratorio_id.data if form.laboratorio_id.data != 0 else None,
             precio_compra=form.precio_compra.data,
             precio_venta=form.precio_venta.data,
             stock=form.stock.data,
@@ -141,12 +150,19 @@ def crear():
 # ============================================
 # EDITAR MEDICAMENTO (UPDATE)
 # ============================================
+# app/routes/medicamentos.py - En la función editar()
+
 @bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar(id):
     """Edita un medicamento existente"""
     medicamento = Medicamento.query.get_or_404(id)
     form = MedicamentoForm(obj=medicamento)
+    
+    # Cargar opciones para los selects
+    from app.models import Categoria, Laboratorio
+    form.categoria_id.choices = [(0, 'Seleccione una categoría')] + [(c.id, c.nombre) for c in Categoria.query.filter_by(activo=True).all()]
+    form.laboratorio_id.choices = [(0, 'Seleccione un laboratorio')] + [(l.id, l.nombre) for l in Laboratorio.query.filter_by(activo=True).all()]
     
     if form.validate_on_submit():
         medicamento.codigo_barras = form.codigo_barras.data
@@ -155,7 +171,8 @@ def editar(id):
         medicamento.descripcion = form.descripcion.data
         medicamento.presentacion = form.presentacion.data
         medicamento.concentracion = form.concentracion.data
-        medicamento.laboratorio = form.laboratorio.data
+        medicamento.categoria_id = form.categoria_id.data if form.categoria_id.data != 0 else None
+        medicamento.laboratorio_id = form.laboratorio_id.data if form.laboratorio_id.data != 0 else None
         medicamento.precio_compra = form.precio_compra.data
         medicamento.precio_venta = form.precio_venta.data
         medicamento.stock = form.stock.data
@@ -176,7 +193,6 @@ def editar(id):
             flash(f'❌ Error al actualizar el medicamento: {str(e)}', 'danger')
     
     return render_template('medicamentos/editar.html', form=form, medicamento=medicamento)
-
 # ============================================
 # ELIMINAR MEDICAMENTO (DELETE - soft delete)
 # ============================================

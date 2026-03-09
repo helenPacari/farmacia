@@ -1,0 +1,237 @@
+cat > app/templates/ventas/nueva.html << 'EOF'
+{% extends "base.html" %}
+
+{% block title %}Nueva Venta - Farmacia App{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-cart-plus"></i> Nueva Venta</h1>
+        <a href="{{ url_for('ventas.listar') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Columna izquierda: Formulario y búsqueda -->
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">1. Datos de la Venta</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="ventaForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.cliente_id.label(class="form-label") }}
+                            {{ form.cliente_id(class="form-select select2", id="cliente_select") }}
+                            <small class="text-muted">
+                                <a href="{{ url_for('clientes.crear') }}" target="_blank">+ Crear nuevo cliente</a>
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.forma_pago.label(class="form-label") }}
+                            {{ form.forma_pago(class="form-select") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.descuento.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.descuento(class="form-control", type="number", step="0.01", id="descuento") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.observaciones.label(class="form-label") }}
+                            {{ form.observaciones(class="form-control", rows=2) }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">2. Agregar Productos</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('ventas.nueva') }}" id="agregarForm">
+                        <input type="hidden" name="agregar_item" value="1">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Buscar Medicamento</label>
+                            <select class="form-select" id="medicamento_select" name="medicamento_id">
+                                <option value="">Escribe para buscar...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Cantidad</label>
+                                    <input type="number" class="form-control" name="cantidad" value="1" min="1" id="cantidad">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio Unit.</label>
+                                    <input type="text" class="form-control" id="precio_mostrado" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100" id="btnAgregar">
+                            <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: Carrito de compras -->
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">3. Carrito de Compras</h5>
+                    <form method="POST" action="{{ url_for('ventas.nueva') }}" style="display: inline;">
+                        <input type="hidden" name="vaciar_carrito" value="1">
+                        <button type="submit" class="btn btn-warning btn-sm" 
+                                onclick="return confirm('¿Vaciar todo el carrito?')">
+                            <i class="fas fa-trash"></i> Vaciar Carrito
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    {% if carrito %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Cant.</th>
+                                    <th>Subtotal</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in carrito %}
+                                <tr>
+                                    <td>{{ item.nombre }}</td>
+                                    <td>${{ "{:,.0f}".format(item.precio) }}</td>
+                                    <td>{{ item.cantidad }}</td>
+                                    <td>${{ "{:,.0f}".format(item.subtotal) }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('ventas.nueva') }}" style="display: inline;">
+                                            <input type="hidden" name="quitar_item" value="1">
+                                            <input type="hidden" name="item_index" value="{{ loop.index0 }}">
+                                            <button type="submit" class="btn btn-danger btn-sm" 
+                                                    onclick="return confirm('¿Quitar este producto?')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-dark">
+                                <tr>
+                                    <th colspan="3" class="text-end">Subtotal:</th>
+                                    <th>${{ "{:,.0f}".format(subtotal) }}</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3" class="text-end">IVA (12%):</th>
+                                    <th>${{ "{:,.0f}".format(iva) }}</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3" class="text-end">Descuento:</th>
+                                    <th>-${{ "{:,.0f}".format(form.descuento.data or 0) }}</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3" class="text-end">TOTAL:</th>
+                                    <th><h4 class="text-success">${{ "{:,.0f}".format(total) }}</h4></th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" form="ventaForm" class="btn btn-success btn-lg"
+                                onclick="return confirm('¿Procesar la venta?')">
+                            <i class="fas fa-check-circle"></i> Procesar Venta
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">El carrito está vacío</p>
+                        <p class="small">Agrega productos usando el buscador</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para autocompletado y Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Inicializar Select2 para cliente
+    $('#cliente_select').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Seleccionar cliente...'
+    });
+    
+    // Inicializar Select2 para medicamentos con búsqueda AJAX
+    $('#medicamento_select').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Buscar medicamento por nombre o código...',
+        minimumInputLength: 2,
+        ajax: {
+            url: '{{ url_for("ventas.buscar_productos") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    q: params.term
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    
+    // Actualizar precio cuando se selecciona un medicamento
+    $('#medicamento_select').on('select2:select', function(e) {
+        var data = e.params.data;
+        $('#precio_mostrado').val('$' + data.precio);
+        $('#cantidad').attr('max', data.stock);
+    });
+    
+    // Validar cantidad antes de agregar
+    $('#agregarForm').on('submit', function(e) {
+        var cantidad = parseInt($('#cantidad').val());
+        var maxStock = parseInt($('#cantidad').attr('max') || 999999);
+        
+        if (cantidad > maxStock) {
+            e.preventDefault();
+            alert('Stock insuficiente. Stock disponible: ' + maxStock);
+        }
+    });
+});
+</script>
+{% endblock %}
+EOF
