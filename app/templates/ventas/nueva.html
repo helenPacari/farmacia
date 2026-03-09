@@ -25,7 +25,12 @@ cat > app/templates/ventas/nueva.html << 'EOF'
                         
                         <div class="mb-3">
                             {{ form.cliente_id.label(class="form-label") }}
-                            {{ form.cliente_id(class="form-select select2", id="cliente_select") }}
+                            <select class="form-control" name="cliente_id" id="cliente_select" required>
+                                <option value="">Seleccionar cliente...</option>
+                                {% for value, label in form.cliente_id.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
                             <small class="text-muted">
                                 <a href="{{ url_for('clientes.crear') }}" target="_blank">+ Crear nuevo cliente</a>
                             </small>
@@ -33,20 +38,24 @@ cat > app/templates/ventas/nueva.html << 'EOF'
                         
                         <div class="mb-3">
                             {{ form.forma_pago.label(class="form-label") }}
-                            {{ form.forma_pago(class="form-select") }}
+                            <select class="form-control" name="forma_pago">
+                                <option value="EFECTIVO">Efectivo</option>
+                                <option value="TARJETA">Tarjeta</option>
+                                <option value="TRANSFERENCIA">Transferencia</option>
+                            </select>
                         </div>
                         
                         <div class="mb-3">
                             {{ form.descuento.label(class="form-label") }}
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                {{ form.descuento(class="form-control", type="number", step="0.01", id="descuento") }}
+                                <input type="number" class="form-control" name="descuento" value="0" step="0.01" id="descuento">
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             {{ form.observaciones.label(class="form-label") }}
-                            {{ form.observaciones(class="form-control", rows=2) }}
+                            <textarea class="form-control" name="observaciones" rows="2"></textarea>
                         </div>
                     </form>
                 </div>
@@ -60,11 +69,21 @@ cat > app/templates/ventas/nueva.html << 'EOF'
                     <form method="POST" action="{{ url_for('ventas.nueva') }}" id="agregarForm">
                         <input type="hidden" name="agregar_item" value="1">
                         
+                        <!-- BUSCADOR SIMPLE - AHORA FUNCIONA -->
                         <div class="mb-3">
                             <label class="form-label">Buscar Medicamento</label>
-                            <select class="form-select" id="medicamento_select" name="medicamento_id">
-                                <option value="">Escribe para buscar...</option>
-                            </select>
+                            <input type="text" class="form-control" id="buscador_productos" 
+                                   placeholder="Escribe para buscar medicamentos..." autocomplete="off">
+                            <div id="resultados_busqueda" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                            <input type="hidden" name="medicamento_id" id="medicamento_id_seleccionado" required>
+                            <small class="text-muted">Escribe al menos 2 caracteres para buscar</small>
+                        </div>
+                        
+                        <!-- Información del producto seleccionado -->
+                        <div id="info_producto" style="display: none;" class="alert alert-info">
+                            <strong id="nombre_seleccionado"></strong><br>
+                            Stock: <span id="stock_seleccionado"></span> | 
+                            Precio: $<span id="precio_seleccionado"></span>
                         </div>
                         
                         <div class="row">
@@ -76,13 +95,13 @@ cat > app/templates/ventas/nueva.html << 'EOF'
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Precio Unit.</label>
-                                    <input type="text" class="form-control" id="precio_mostrado" readonly>
+                                    <label class="form-label">Subtotal</label>
+                                    <input type="text" class="form-control" id="subtotal_calculado" readonly>
                                 </div>
                             </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary w-100" id="btnAgregar">
+                        <button type="submit" class="btn btn-primary w-100" id="btnAgregar" disabled>
                             <i class="fas fa-cart-plus"></i> Agregar al Carrito
                         </button>
                     </form>
@@ -90,7 +109,7 @@ cat > app/templates/ventas/nueva.html << 'EOF'
             </div>
         </div>
 
-        <!-- Columna derecha: Carrito de compras -->
+        <!-- Columna derecha: Carrito de compras (igual que antes) -->
         <div class="col-md-7">
             <div class="card">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
@@ -149,7 +168,7 @@ cat > app/templates/ventas/nueva.html << 'EOF'
                                 </tr>
                                 <tr>
                                     <th colspan="3" class="text-end">Descuento:</th>
-                                    <th>-${{ "{:,.0f}".format(form.descuento.data or 0) }}</th>
+                                    <th>-${{ "{:,.0f}".format(descuento|default(0)) }}</th>
                                     <th></th>
                                 </tr>
                                 <tr>
@@ -180,55 +199,107 @@ cat > app/templates/ventas/nueva.html << 'EOF'
     </div>
 </div>
 
-<!-- Script para autocompletado y Select2 -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Script para búsqueda AJAX simplificada -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
-    // Inicializar Select2 para cliente
-    $('#cliente_select').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Seleccionar cliente...'
-    });
+    let timeoutId;
+    let productos = [];
     
-    // Inicializar Select2 para medicamentos con búsqueda AJAX
-    $('#medicamento_select').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Buscar medicamento por nombre o código...',
-        minimumInputLength: 2,
-        ajax: {
-            url: '{{ url_for("ventas.buscar_productos") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return {
-                    q: params.term
-                };
-            },
-            processResults: function(data) {
-                return {
-                    results: data
-                };
-            },
-            cache: true
-        }
-    });
-    
-    // Actualizar precio cuando se selecciona un medicamento
-    $('#medicamento_select').on('select2:select', function(e) {
-        var data = e.params.data;
-        $('#precio_mostrado').val('$' + data.precio);
-        $('#cantidad').attr('max', data.stock);
-    });
-    
-    // Validar cantidad antes de agregar
-    $('#agregarForm').on('submit', function(e) {
-        var cantidad = parseInt($('#cantidad').val());
-        var maxStock = parseInt($('#cantidad').attr('max') || 999999);
+    // Buscar productos mientras se escribe
+    $('#buscador_productos').on('keyup', function() {
+        let termino = $(this).val();
         
-        if (cantidad > maxStock) {
+        clearTimeout(timeoutId);
+        
+        if (termino.length < 2) {
+            $('#resultados_busqueda').hide();
+            return;
+        }
+        
+        timeoutId = setTimeout(function() {
+            $.ajax({
+                url: '{{ url_for("ventas.buscar_productos") }}',
+                data: { q: termino },
+                success: function(data) {
+                    productos = data;
+                    mostrarResultados(data);
+                }
+            });
+        }, 300);
+    });
+    
+    // Mostrar resultados de búsqueda
+    function mostrarResultados(resultados) {
+        let html = '';
+        if (resultados.length === 0) {
+            html = '<a class="list-group-item list-group-item-action">No se encontraron productos</a>';
+        } else {
+            resultados.forEach(function(item) {
+                html += `<a href="#" class="list-group-item list-group-item-action" 
+                         data-id="${item.id}" 
+                         data-nombre="${item.text.split(' - ')[0]}"
+                         data-precio="${item.precio}"
+                         data-stock="${item.stock}">
+                            ${item.text}
+                        </a>`;
+            });
+        }
+        $('#resultados_busqueda').html(html).show();
+    }
+    
+    // Seleccionar un producto de los resultados
+    $('#resultados_busqueda').on('click', 'a', function(e) {
+        e.preventDefault();
+        
+        let id = $(this).data('id');
+        let nombre = $(this).data('nombre');
+        let precio = $(this).data('precio');
+        let stock = $(this).data('stock');
+        
+        // Guardar selección
+        $('#medicamento_id_seleccionado').val(id);
+        $('#nombre_seleccionado').text(nombre);
+        $('#stock_seleccionado').text(stock);
+        $('#precio_seleccionado').text(precio.toLocaleString('es-CO'));
+        
+        // Mostrar info
+        $('#info_producto').show();
+        $('#resultados_busqueda').hide();
+        $('#buscador_productos').val(nombre);
+        
+        // Calcular subtotal inicial
+        calcularSubtotal();
+        
+        // Habilitar botón
+        $('#btnAgregar').prop('disabled', false);
+    });
+    
+    // Calcular subtotal
+    $('#cantidad').on('input', function() {
+        calcularSubtotal();
+    });
+    
+    function calcularSubtotal() {
+        let precio = parseFloat($('#precio_seleccionado').text().replace(/\./g, ''));
+        let cantidad = parseInt($('#cantidad').val()) || 0;
+        let stock = parseInt($('#stock_seleccionado').text());
+        
+        if (cantidad > stock) {
+            $('#cantidad').val(stock);
+            cantidad = stock;
+            alert('Stock máximo disponible: ' + stock);
+        }
+        
+        let subtotal = precio * cantidad;
+        $('#subtotal_calculado').val('$' + subtotal.toLocaleString('es-CO'));
+    }
+    
+    // Validar antes de enviar
+    $('#agregarForm').on('submit', function(e) {
+        if (!$('#medicamento_id_seleccionado').val()) {
             e.preventDefault();
-            alert('Stock insuficiente. Stock disponible: ' + maxStock);
+            alert('❌ Debes seleccionar un medicamento');
         }
     });
 });
