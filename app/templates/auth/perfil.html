@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">👤 Mi Perfil</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Nombre:</strong> {{ usuario.nombre }} {{ usuario.apellidos }}</p>
+                <p><strong>Email:</strong> {{ usuario.email }}</p>
+                <p><strong>Teléfono:</strong> {{ usuario.telefono }}</p>
+                <p><strong>Miembro desde:</strong> {{ usuario.fecha_registro.strftime('%d/%m/%Y') }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">📊 Mi Actividad</h4>
+            </div>
+            <div class="card-body">
+                <h5>Medicamentos que he creado</h5>
+                {% if usuario.medicamentos_creados.count() > 0 %}
+                    <ul class="list-group">
+                        {% for med in usuario.medicamentos_creados.limit(5) %}
+                            <li class="list-group-item">
+                                {{ med.nombre }} - ${{ med.precio }}
+                                <small class="text-muted float-end">{{ med.fecha_creacion.strftime('%d/%m/%Y') }}</small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Aún no has creado ningún medicamento.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

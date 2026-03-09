@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Medicamentos - Farmacia App{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabecera con título y botón nuevo -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">
+            <i class="fas fa-pills"></i> Gestión de Medicamentos
+            <small class="text-muted fs-6">Total: {{ total_medicamentos }}</small>
+        </h1>
+        <a href="{{ url_for('medicamentos.crear') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Medicamento
+        </a>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Stock</h5>
+                    <h2>{{ total_stock }}</h2>
+                    <small>Unidades en inventario</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Valor Inventario</h5>
+                    <h2>${{ "{:,.0f}".format(valor_inventario) }}</h2>
+                    <small>Costo total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Stock Bajo</h5>
+                    <h2>{{ stock_bajo }}</h2>
+                    <small>Medicamentos por reabastecer</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Página Actual</h5>
+                    <h2>{{ pagination.page }}/{{ pagination.pages or 1 }}</h2>
+                    <small>Mostrando {{ medicamentos|length }} registros</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Buscar</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search }}" placeholder="Nombre, laboratorio, código...">
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro" class="form-label">Filtro</label>
+                    <select class="form-select" id="filtro" name="filtro">
+                        <option value="todos" {% if filtro == 'todos' %}selected{% endif %}>Todos</option>
+                        <option value="activos" {% if filtro == 'activos' %}selected{% endif %}>Activos</option>
+                        <option value="inactivos" {% if filtro == 'inactivos' %}selected{% endif %}>Inactivos</option>
+                        <option value="stock_bajo" {% if filtro == 'stock_bajo' %}selected{% endif %}>Stock Bajo</option>
+                        <option value="receta" {% if filtro == 'receta' %}selected{% endif %}>Requiere Receta</option>
+                        <option value="por_vencer" {% if filtro == 'por_vencer' %}selected{% endif %}>Por Vencer (30 días)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="ordenar" class="form-label">Ordenar por</label>
+                    <select class="form-select" id="ordenar" name="ordenar">
+                        <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
+                        <option value="precio" {% if ordenar == 'precio' %}selected{% endif %}>Precio (mayor)</option>
+                        <option value="stock" {% if ordenar == 'stock' %}selected{% endif %}>Stock (menor)</option>
+                        <option value="vencimiento" {% if ordenar == 'vencimiento' %}selected{% endif %}>Vencimiento</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Aplicar
+                    </button>
+                </div>
+                <div class="col-md-12 text-end">
+                    <a href="{{ url_for('medicamentos.exportar') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-download"></i> Exportar CSV
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de medicamentos -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Laboratorio</th>
+                            <th>Stock</th>
+                            <th>Precio Compra</th>
+                            <th>Precio Venta</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for med in medicamentos %}
+                        <tr class="{% if not med.activo %}table-secondary{% endif %}">
+                            <td>{{ med.id }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ med.codigo_barras or 'N/A' }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ med.nombre }}</strong>
+                                {% if med.nombre_generico %}
+                                    <br><small class="text-muted">{{ med.nombre_generico }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ med.laboratorio or 'N/A' }}</td>
+                            <td>
+                                <span class="badge {% if med.stock_bajo %}bg-danger{% else %}bg-success{% endif %}">
+                                    {{ med.stock }}
+                                </span>
+                                {% if med.stock_minimo %}
+                                    <br><small>Mín: {{ med.stock_minimo }}</small>
+                                {% endif %}
+                            </td>
+                            <td>${{ "{:,.0f}".format(med.precio_compra) }}</td>
+                            <td>
+                                ${{ "{:,.0f}".format(med.precio_venta) }}
+                                <br><small class="text-success">+{{ med.margen_ganancia|round }}%</small>
+                            </td>
+                            <td>
+                                {% if med.activo %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                {% endif %}
+                                {% if med.requiere_receta %}
+                                    <br><span class="badge bg-warning">Receta</span>
+                                {% endif %}
+                                {% if med.fecha_vencimiento and med.fecha_vencimiento < now().date() %}
+                                    <br><span class="badge bg-danger">Vencido</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('medicamentos.detalle', id=med.id) }}" 
+                                       class="btn btn-sm btn-info" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('medicamentos.editar', id=med.id) }}" 
+                                       class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if med.activo %}
+                                    <form method="POST" action="{{ url_for('medicamentos.eliminar', id=med.id) }}" 
+                                          style="display: inline;" 
+                                          onsubmit="return confirm('¿Desactivar {{ med.nombre }}?');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Desactivar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form method="POST" action="{{ url_for('medicamentos.activar', id=med.id) }}" 
+                                          style="display: inline;" 
+                                          onsubmit="return confirm('¿Activar {{ med.nombre }}?');">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Activar">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <p class="text-muted mb-0">No hay medicamentos registrados</p>
+                                <a href="{{ url_for('medicamentos.crear') }}" class="btn btn-primary mt-2">
+                                    Crear el primer medicamento
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Paginación" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('medicamentos.listar', page=pagination.prev_num, search=search, filtro=filtro, ordenar=ordenar) if pagination.has_prev else '#' }}">
+                            Anterior
+                        </a>
+                    </li>
+                    
+                    {% for page_num in pagination.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('medicamentos.listar', page=page_num, search=search, filtro=filtro, ordenar=ordenar) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('medicamentos.listar', page=pagination.next_num, search=search, filtro=filtro, ordenar=ordenar) if pagination.has_next else '#' }}">
+                            Siguiente
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

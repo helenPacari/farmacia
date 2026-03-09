@@ -1,0 +1,60 @@
+services:
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: farmacia_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: farmacia_db
+      MYSQL_USER: farmacia_user
+      MYSQL_PASSWORD: farmacia123
+      MYSQL_ROOT_PASSWORD: root123  # Contraseña del usuario root
+      MYSQL_PORT: 3306
+    ports:
+      - "3306:3306"  # Mapea el puerto 3306 del contenedor al 3306 de tu máquina
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d  # Scripts de inicialización (opcional)
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    networks:
+      - farmacia_network
+
+  # phpMyAdmin - Para administrar MySQL desde el navegador
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: farmacia_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql  # Nombre del servicio MySQL
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root123
+      UPLOAD_LIMIT: 100M
+    ports:
+      - "8080:80"  # Accede a phpMyAdmin en http://localhost:8080
+    depends_on:
+      - mysql
+    networks:
+      - farmacia_network
+
+  # (Opcional) Adminer - alternativa liviana a phpMyAdmin
+  adminer:
+    image: adminer:latest
+    container_name: farmacia_adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"  # Accede a Adminer en http://localhost:8081
+    depends_on:
+      - mysql
+    networks:
+      - farmacia_network
+
+networks:
+  farmacia_network:
+    driver: bridge
+
+volumes:
+  mysql_data:

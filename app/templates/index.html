@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Farmacia App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">¡Bienvenido a Farmacia App! 🏥</h1>
+            <p class="lead">
+                Sistema de gestión farmacéutica para administrar medicamentos, inventario y más.
+            </p>
+            <hr class="my-4">
+            <p>Selecciona una opción para comenzar:</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">
+                <h5 class="card-title">💊 Medicamentos</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Gestiona el inventario de medicamentos: alta, baja, modificación y consulta.</p>
+                <a href="{{ url_for('medicamentos.listar') }}" class="btn btn-light">Ir a Medicamentos</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">
+                <h5 class="card-title">👤 Mi Perfil</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Consulta y actualiza tu información personal.</p>
+                <a href="{{ url_for('auth.perfil') }}" class="btn btn-light">Ver Perfil</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">
+                <h5 class="card-title">📊 Estadísticas</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Visualiza reportes y estadísticas del inventario.</p>
+                <a href="#" class="btn btn-light">Ver Estadísticas</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+EOF

@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de {{ medicamento.nombre }} - Farmacia App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-info-circle"></i> Detalle del Medicamento</h4>
+                <div>
+                    <a href="{{ url_for('medicamentos.editar', id=medicamento.id) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{{ url_for('medicamentos.listar') }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">ID:</th>
+                                <td>{{ medicamento.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Código de Barras:</th>
+                                <td>{{ medicamento.codigo_barras or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre Comercial:</th>
+                                <td><strong>{{ medicamento.nombre }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Nombre Genérico:</th>
+                                <td>{{ medicamento.nombre_generico or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Laboratorio:</th>
+                                <td>{{ medicamento.laboratorio or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Presentación:</th>
+                                <td>{{ medicamento.presentacion or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Concentración:</th>
+                                <td>{{ medicamento.concentracion or 'N/A' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Ubicación:</th>
+                                <td>{{ medicamento.ubicacion or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Requiere Receta:</th>
+                                <td>
+                                    {% if medicamento.requiere_receta %}
+                                        <span class="badge bg-warning">Sí</span>
+                                    {% else %}
+                                        <span class="badge bg-success">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Estado:</th>
+                                <td>
+                                    {% if medicamento.activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Fecha Vencimiento:</th>
+                                <td>
+                                    {% if medicamento.fecha_vencimiento %}
+                                        {{ medicamento.fecha_vencimiento.strftime('%d/%m/%Y') }}
+                                        {% if medicamento.fecha_vencimiento < now().date() %}
+                                            <span class="badge bg-danger">Vencido</span>
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Creado por:</th>
+                                <td>
+                                    {% if medicamento.creado_por %}
+                                        {{ medicamento.creado_por.nombre }} {{ medicamento.creado_por.apellidos }}
+                                        <br><small>{{ medicamento.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    {% else %}
+                                        Sistema
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Última actualización:</th>
+                                <td>
+                                    {% if medicamento.actualizado_por %}
+                                        {{ medicamento.actualizado_por.nombre }}
+                                        <br><small>{{ medicamento.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    {% else %}
+                                        {{ medicamento.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5>Descripción:</h5>
+                        <p class="border p-3 bg-light">{{ medicamento.descripcion or 'Sin descripción' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Tarjeta de Stock -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-boxes"></i> Información de Stock</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h1 class="display-4 {% if medicamento.stock_bajo %}text-danger{% else %}text-success{% endif %}">
+                        {{ medicamento.stock }}
+                    </h1>
+                    <p>Unidades en stock</p>
+                </div>
+                
+                <table class="table table-sm">
+                    <tr>
+                        <th>Stock Mínimo:</th>
+                        <td class="text-end">{{ medicamento.stock_minimo }}</td>
+                    </tr>
+                    <tr>
+                        <th>Stock Máximo:</th>
+                        <td class="text-end">{{ medicamento.stock_maximo or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Valor del Inventario:</th>
+                        <td class="text-end">${{ "{:,.0f}".format(medicamento.valor_inventario) }}</td>
+                    </tr>
+                    <tr>
+                        <th>Ganancia Potencial:</th>
+                        <td class="text-end text-success">${{ "{:,.0f}".format(medicamento.ganancia_potencial) }}</td>
+                    </tr>
+                </table>
+                
+                {% if medicamento.stock_bajo %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        El stock está por debajo del mínimo recomendado.
+                    </div>
+                {% endif %}
+                
+                <!-- Formulario rápido para ajustar stock -->
+                <hr>
+                <h6>Ajustar Stock</h6>
+                <form method="POST" action="{{ url_for('medicamentos.ajustar_stock', id=medicamento.id) }}" class="row g-2">
+                    <div class="col-md-5">
+                        <select name="tipo" class="form-select form-select-sm" required>
+                            <option value="entrada">+ Entrada</option>
+                            <option value="salida">- Salida</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="number" name="cantidad" class="form-control form-control-sm" 
+                               placeholder="Cantidad" min="1" required>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Aplicar</button>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <input type="text" name="motivo" class="form-control form-control-sm" 
+                               placeholder="Motivo (opcional)">
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Tarjeta de Precios -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-tags"></i> Información de Precios</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Precio Compra:</th>
+                        <td class="text-end">${{ "{:,.0f}".format(medicamento.precio_compra) }}</td>
+                    </tr>
+                    <tr>
+                        <th>Precio Venta:</th>
+                        <td class="text-end">${{ "{:,.0f}".format(medicamento.precio_venta) }}</td>
+                    </tr>
+                    <tr>
+                        <th>Margen de Ganancia:</th>
+                        <td class="text-end text-success">{{ medicamento.margen_ganancia|round(1) }}%</td>
+                    </tr>
+                    <tr>
+                        <th>Utilidad por unidad:</th>
+                        <td class="text-end">${{ "{:,.0f}".format(medicamento.precio_venta - medicamento.precio_compra) }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Botones de acción adicionales -->
+        <div class="d-grid gap-2">
+            {% if medicamento.activo %}
+                <form method="POST" action="{{ url_for('medicamentos.eliminar', id=medicamento.id) }}"
+                      onsubmit="return confirm('¿Desactivar {{ medicamento.nombre }}?');">
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="fas fa-trash"></i> Desactivar Medicamento
+                    </button>
+                </form>
+            {% else %}
+                <form method="POST" action="{{ url_for('medicamentos.activar', id=medicamento.id) }}"
+                      onsubmit="return confirm('¿Activar {{ medicamento.nombre }}?');">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-check"></i> Activar Medicamento
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
